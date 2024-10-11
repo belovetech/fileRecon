@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reconciliation Report</title>
+  </head>
+  <body>
+    <h1>Reconciliation Report</h1>
+
+    <h2>Missing in Target</h2>
+    <ul>
+      {% for record in missing_in_target %}
+      <li>{{ record }}</li>
+      {% empty %}
+      <li>No records missing in target.</li>
+      {% endfor %}
+    </ul>
+
+    <h2>Missing in Source</h2>
+    <ul>
+      {% for record in missing_in_source %}
+      <li>{{ record }}</li>
+      {% empty %}
+      <li>No records missing in source.</li>
+      {% endfor %}
+    </ul>
+
+    <h2>Discrepancies</h2>
+    <ul>
+      {% for discrepancy in discrepancies %}
+      <li>{{ discrepancy }}</li>
+      {% empty %}
+      <li>No discrepancies found.</li>
+      {% endfor %}
+    </ul>
+  </body>
+</html>

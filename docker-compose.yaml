@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: credrails_assessment
+    image: filerecon
     container_name: reconciliation
     command: python manage.py runserver 0.0.0.0:8000
     ports:

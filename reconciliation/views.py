@@ -45,6 +45,8 @@ class FileUploadView(views.APIView):
             return False
         return file.name.endswith('.csv') or file.content_type == 'text/csv'
 
+
+class FileReconciliationView(views.APIView):
     def get(self, request, file_id, format=None):
         try:
             reconciliation_file = ReconciliationFile.objects.get(id=file_id)

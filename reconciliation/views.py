@@ -53,7 +53,7 @@ class FileUploadView(views.APIView):
 
             response_data = reconcile_files(source_file, target_file)
 
-            response_format = request.accepted_renderer.format
+            response_format = request.query_params.get('format', 'json')
             response_format = format if format else response_format
 
             print(f"response_format: {response_format}")

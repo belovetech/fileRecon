@@ -53,12 +53,14 @@ class FileUploadView(views.APIView):
 
             response_data = reconcile_files(source_file, target_file)
 
-            output_format = request.accepted_renderer.format
-            output_format = format if format else output_format
+            response_format = request.accepted_renderer.format
+            response_format = format if format else response_format
 
-            if output_format == 'csv':
+            print(f"response_format: {response_format}")
+
+            if response_format == 'csv':
                 return self.generate_csv_response(**response_data)
-            elif output_format == 'html':
+            elif response_format == 'html':
                 return Response(response_data, template_name='reconciliation_report.html')
             else:
                 return Response(response_data, status=status.HTTP_200_OK)
@@ -103,13 +105,13 @@ class FileUploadView(views.APIView):
         :param section_title: Title of the section (e.g., "Missing in Target" or "Missing in Source")
         :param missing_records: List of records missing in the target or source
         """
-        writer.writerow([section_title])  # Section header
-        writer.writerow(['ID', 'Name', 'Date', 'Amount'])  # Column headers
+        writer.writerow([section_title])
+        writer.writerow(['ID', 'Name', 'Date', 'Amount'])
         for record in missing_records:
             writer.writerow([record.get('ID'), record.get('Name'),
                             record.get('Date'), record.get('Amount')])
 
-        writer.writerow([])  # Empty row as a separator
+        writer.writerow([])
 
     def generate_discrepancies_section(self, writer, discrepancies):
         """
@@ -118,9 +120,9 @@ class FileUploadView(views.APIView):
         :param writer: CSV writer object
         :param discrepancies: List of discrepancies between source and target records
         """
-        writer.writerow(['Discrepancies'])  # Section header
+        writer.writerow(['Discrepancies'])
         writer.writerow(['ID', 'Field', 'Source Value',
-                        'Target Value'])  # Column headers
+                        'Target Value'])
         for discrepancy in discrepancies:
             discrepancy_id = discrepancy['id']
             for detail in discrepancy['discrepancy_details']:

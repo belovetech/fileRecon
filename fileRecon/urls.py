@@ -18,8 +18,13 @@ from django.contrib import admin
 from django.urls import path, include
 from reconciliation import urls as reconciliation_urls
 
+from django.conf.urls import handler404, handler400
+from reconciliation.views import custom_404
+
+# Define the custom handler
+handler400 = 'reconciliation.views.custom_404'
+handler404 = 'reconciliation.views.custom_404'
 
 urlpatterns = [
     path("api/", include(reconciliation_urls)),
-    path("admin/", admin.site.urls)
 ]

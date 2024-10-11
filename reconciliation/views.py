@@ -1,6 +1,6 @@
 import csv
 import logging
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, Http404, JsonResponse
 from rest_framework import status,  generics
 from rest_framework.response import Response
 from reconciliation.serializers import ReconciliationFileSerializer
@@ -142,3 +142,11 @@ class FileReconciliationView(generics.RetrieveAPIView):
                     detail['source_value'],
                     detail['target_value']
                 ])
+
+
+def custom_404(request, exception):
+    response_data = {
+        "error": "The resource you requested was not found",
+        "status_code": 404
+    }
+    return JsonResponse(response_data, status=404)

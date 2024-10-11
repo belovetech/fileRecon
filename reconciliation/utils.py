@@ -89,7 +89,7 @@ def read_csv_file(file_path: str) -> dict[str, dict]:
         raise Exception(f"An error occurred: {e}")
 
 
-def reconcile_files(source_file: str, target_file: str) -> tuple[list[dict], list[dict], list[dict]]:
+def reconcile_files(source_file: str, target_file: str) -> dict[str, list[dict]]:
     """
     Reconcile the source and target CSV files and return the missing records and discrepancies.
 

@@ -12,7 +12,7 @@ services:
       - .:/app
       - db_data:/db.sqlite3
     environment:
-      - DEBUG=1
+      - DEBUG=0
     develop:
       watch:
         - action: sync+restart

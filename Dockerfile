@@ -23,6 +23,7 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 ENV PATH="/opt/venv/bin:$PATH"
+ENV DEBUG=0
 
 # Set working directory
 WORKDIR /app

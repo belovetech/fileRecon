@@ -8,7 +8,7 @@ This project compares two CSV files to identify missing records and discrepancie
 2. Create a virtual environment: `python -m venv .venv`
 3. Install dependencies: `pip install -r requirements.txt`
 4. Run the migrations: `python manage.py migrate`
-5. Start the development server: `python manage.py runserver`
+5. Start the development server: `DEBUG=0 python manage.py runserver 0.0.0.0:8000`
 
 ## Usage
 

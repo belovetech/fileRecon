@@ -87,11 +87,10 @@ class TestUtils(unittest.TestCase):
                 "ID,Name,Date,Amount\n001,John Doe,2023-01-01,150.00\n002,Jane Smith,2023-01-02,200.00")
         ]
 
-        missing_in_target, missing_in_source, discrepancies = reconcile_files(
-            'source.csv', 'target.csv')
+        response = reconcile_files('source.csv', 'target.csv')
 
-        self.assertEqual(missing_in_target, [])
-        self.assertEqual(missing_in_source, [])
+        self.assertEqual(response["missing_in_target"], [])
+        self.assertEqual(response["missing_in_source"], [])
 
         expected_discrepancies = [
             {
@@ -102,7 +101,7 @@ class TestUtils(unittest.TestCase):
                 ]
             }
         ]
-        self.assertEqual(discrepancies, expected_discrepancies)
+        self.assertEqual(response["discrepancies"], expected_discrepancies)
 
 
 if __name__ == "__main__":

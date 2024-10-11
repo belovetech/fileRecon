@@ -105,4 +105,10 @@ def reconcile_files(source_file: str, target_file: str) -> tuple[list[dict], lis
     missing_in_source = find_missing_records(target_dict, source_dict)
     discrepancies = find_discrepancies(source_dict, target_dict)
 
-    return missing_in_target, missing_in_source, discrepancies
+    response_data = {
+        "missing_in_target": missing_in_target,
+        "missing_in_source": missing_in_source,
+        "discrepancies": discrepancies,
+    }
+
+    return response_data

@@ -19,7 +19,7 @@ BASE URL`http://localhost:8000/api/`
 
 # Run tests
 
-` python manage.py test reconciliation`
+` python manage.py test`
 
 ## Docker Setup
 

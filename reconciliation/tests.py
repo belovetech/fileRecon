@@ -31,8 +31,9 @@ class FileUploadViewTests(APITestCase):
         }, format='multipart')
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('source_file', response.data)
-        self.assertIn('target_file', response.data)
+        self.assertIn('error', response.data)
+        self.assertEqual(response.data['error'],
+                         "Source file is not a valid CSV file.")
 
     def test_get_reconciliation_success(self):
         upload_response = self.client.post(self.upload_url, {

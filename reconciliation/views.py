@@ -1,7 +1,7 @@
 import csv
 import logging
 from django.core.exceptions import ValidationError
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from rest_framework import status, views, generics
 from rest_framework.response import Response
 from reconciliation.serializers import ReconciliationFileSerializer
@@ -59,12 +59,25 @@ class FileReconciliationView(generics.RetrieveAPIView):
     serializer_class = ReconciliationFileSerializer
     lookup_field = 'id'
 
+    def get_object(self):
+        """
+        Override get_object to explicitly handle the DoesNotExist exception
+        and return a custom 'File not found' error response.
+        """
+        try:
+            file_id = self.kwargs.get(self.lookup_field)
+            return ReconciliationFile.objects.get(id=file_id)
+        except ReconciliationFile.DoesNotExist:
+            logger.error(f"Reconciliation file with ID {file_id} not found.")
+            raise Http404
+
     def get(self, request, *args, **kwargs):
         """
             Overriding get method to handle file validation and logging.
         """
         try:
             format = kwargs.get('format')
+            file_id = kwargs.get('id')
             reconciliation_file = self.get_object()
             source_file = reconciliation_file.source_file.path
             target_file = reconciliation_file.target_file.path
@@ -79,6 +92,8 @@ class FileReconciliationView(generics.RetrieveAPIView):
                 return Response(response_data, template_name='reconciliation_report.html')
             else:
                 return Response(response_data, status=status.HTTP_200_OK)
+        except Http404:
+            return Response({"error": "File not found"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             logger.error(f"Error during reconciliation: {e}")
             if str(e) == 'source and target headers do not match':

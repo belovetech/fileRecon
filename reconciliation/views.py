@@ -1,8 +1,7 @@
 import csv
 import logging
-from django.core.exceptions import ValidationError
 from django.http import HttpResponse, Http404
-from rest_framework import status, views, generics
+from rest_framework import status,  generics
 from rest_framework.response import Response
 from reconciliation.serializers import ReconciliationFileSerializer
 from reconciliation.models import ReconciliationFile
@@ -77,7 +76,6 @@ class FileReconciliationView(generics.RetrieveAPIView):
         """
         try:
             format = kwargs.get('format')
-            file_id = kwargs.get('id')
             reconciliation_file = self.get_object()
             source_file = reconciliation_file.source_file.path
             target_file = reconciliation_file.target_file.path

@@ -15,8 +15,12 @@ This project compares two CSV files to identify missing records and discrepancie
 BASE URL`http://localhost:8000/api/`
 
 1. Upload files at `upload/`.
-2. Reconcile files at `api/reconcile/<file_id>?format=json|csv|html`.
+2. Reconcile files at `api/reconcile/<id>?format=json|csv|html`. id is the id you get after uploading the files.
 
 # Run tests
 
 ` python manage.py test reconciliation`
+
+## Docker Setup
+
+1. Run `docker-compose up --build` to start the containers.

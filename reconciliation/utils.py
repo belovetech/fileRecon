@@ -55,12 +55,21 @@ def validate_target_source_header(source_headers: list[str], target_headers: lis
     """
         Validate if the source and target headers match.
     """
-    if len(source_headers) != len(target_headers):
-        raise Exception("source and target headers do not match")
+    source_set, target_set, = set(source_headers), set(target_headers)
 
-    for i in range(len(source_headers)):
-        if source_headers[i] != target_headers[i]:
-            raise Exception("source and target headers do not match")
+    missing_source = target_set - source_set
+    missing_target = source_set - target_set
+
+    if missing_source or missing_target:
+        error_data = {
+            'missing_in_source': ", ".join(missing_source),
+            'missing_in_target': ", ".join(missing_target)
+        }
+        raise ValueError(
+            f"source and target headers do not match: {error_data}")
+
+    if source_headers != target_headers:
+        raise ValueError(f"Source and target headers do not match in order")
 
     return True
 

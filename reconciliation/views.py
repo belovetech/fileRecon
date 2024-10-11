@@ -92,10 +92,11 @@ class FileReconciliationView(generics.RetrieveAPIView):
                 return Response(response_data, status=status.HTTP_200_OK)
         except Http404:
             return Response({"error": "File not found"}, status=status.HTTP_404_NOT_FOUND)
+        except ValueError as e:
+            logger.error(f"Error during reconciliation: {e}")
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             logger.error(f"Error during reconciliation: {e}")
-            if str(e) == 'source and target headers do not match':
-                return Response({"error": "Source and target columns do not match"}, status=status.HTTP_400_BAD_REQUEST)
             return Response({"error": "Unable to reconcile files"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def generate_csv_response(self, **response_data):

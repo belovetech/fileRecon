@@ -2,7 +2,7 @@ import csv
 import logging
 from django.core.exceptions import ValidationError
 from django.http import HttpResponse
-from rest_framework import status, views
+from rest_framework import status, views, generics
 from rest_framework.response import Response
 from reconciliation.serializers import ReconciliationFileSerializer
 from reconciliation.models import ReconciliationFile
@@ -12,30 +12,38 @@ from reconciliation.utils import reconcile_files
 logger = logging.getLogger(__name__)
 
 
-class FileUploadView(views.APIView):
-    def post(self, request, *args, **kwargs):
-        try:
-            serializer = ReconciliationFileSerializer(data=request.data)
-            if serializer.is_valid():
-                source_file = request.FILES.get('source_file')
-                target_file = request.FILES.get('target_file')
+class FileUploadView(generics.CreateAPIView):
+    queryset = ReconciliationFile.objects.all()
+    serializer_class = ReconciliationFileSerializer
 
-                if not self.is_csv_file(source_file):
-                    return Response({"error": "Source file is not a valid CSV file."}, status=status.HTTP_400_BAD_REQUEST)
+    def create(self, request, *args, **kwargs):
+        """
+        Overriding the create method to handle file validation and provide custom response.
+        """
+        source_file = request.FILES.get('source_file')
+        target_file = request.FILES.get('target_file')
 
-                if not self.is_csv_file(target_file):
-                    return Response({"error": "Target file is not a valid CSV file."}, status=status.HTTP_400_BAD_REQUEST)
+        if not self.is_csv_file(source_file):
+            return Response({"error": "Source file is not a valid CSV file."}, status=status.HTTP_400_BAD_REQUEST)
+        if not self.is_csv_file(target_file):
+            return Response({"error": "Target file is not a valid CSV file."}, status=status.HTTP_400_BAD_REQUEST)
 
-                file_instance = serializer.save()
-                logger.info(f"File {file_instance.id} uploaded successfully.")
-                return Response({"message": "Files uploaded successfully", "id": file_instance.id}, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except ValidationError as e:
-            logger.error(f"Validation error: {e}")
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            logger.error(f"File upload failed: {e}")
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        file_instance = self.perform_create(serializer)
+
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            {"message": "Files uploaded successfully", "id": file_instance.id},
+            status=status.HTTP_201_CREATED,
+            headers=headers
+        )
+
+    def perform_create(self, serializer):
+        """
+        Save the file instance and return it.
+        """
+        return serializer.save()
 
     def is_csv_file(self, file):
         """
@@ -46,19 +54,24 @@ class FileUploadView(views.APIView):
         return file.name.endswith('.csv') or file.content_type == 'text/csv'
 
 
-class FileReconciliationView(views.APIView):
-    def get(self, request, file_id, format=None):
+class FileReconciliationView(generics.RetrieveAPIView):
+    queryset = ReconciliationFile.objects.all()
+    serializer_class = ReconciliationFileSerializer
+    lookup_field = 'id'
+
+    def get(self, request, *args, **kwargs):
+        """
+            Overriding get method to handle file validation and logging.
+        """
         try:
-            reconciliation_file = ReconciliationFile.objects.get(id=file_id)
+            format = kwargs.get('format')
+            reconciliation_file = self.get_object()
             source_file = reconciliation_file.source_file.path
             target_file = reconciliation_file.target_file.path
 
             response_data = reconcile_files(source_file, target_file)
-
             response_format = request.query_params.get('format', 'json')
             response_format = format if format else response_format
-
-            print(f"response_format: {response_format}")
 
             if response_format == 'csv':
                 return self.generate_csv_response(**response_data)
@@ -66,16 +79,11 @@ class FileReconciliationView(views.APIView):
                 return Response(response_data, template_name='reconciliation_report.html')
             else:
                 return Response(response_data, status=status.HTTP_200_OK)
-
-        except ReconciliationFile.DoesNotExist:
-            logger.error(f"Reconciliation file with ID {file_id} not found.")
-            return Response({"error": "File not found"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             logger.error(f"Error during reconciliation: {e}")
-            if e.args[0] == 'source and target headers do not match':
+            if str(e) == 'source and target headers do not match':
                 return Response({"error": "Source and target columns do not match"}, status=status.HTTP_400_BAD_REQUEST)
-            else:
-                return Response({"error": "Unable to reconcile files"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"error": "Unable to reconcile files"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def generate_csv_response(self, **response_data):
         """
@@ -85,46 +93,32 @@ class FileReconciliationView(views.APIView):
         response['Content-Disposition'] = 'attachment; filename="reconciliation.csv"'
         writer = csv.writer(response)
 
-        missing_in_target = response_data.get('missing_in_target', [])
-        missing_in_source = response_data.get('missing_in_source', [])
-        discrepancies = response_data.get('discrepancies', [])
-
         self.generate_missing_records_section(
-            writer, 'Missing in Target', missing_in_target)
-
+            writer, 'Missing in Target', response_data.get('missing_in_target', []))
         self.generate_missing_records_section(
-            writer, 'Missing in Source', missing_in_source)
-
-        self.generate_discrepancies_section(writer, discrepancies)
+            writer, 'Missing in Source', response_data.get('missing_in_source', []))
+        self.generate_discrepancies_section(
+            writer, response_data.get('discrepancies', []))
 
         return response
 
     def generate_missing_records_section(self, writer, section_title, missing_records):
         """
         Generate a CSV section for missing records (either in target or source).
-
-        :param writer: CSV writer object
-        :param section_title: Title of the section (e.g., "Missing in Target" or "Missing in Source")
-        :param missing_records: List of records missing in the target or source
         """
         writer.writerow([section_title])
         writer.writerow(['ID', 'Name', 'Date', 'Amount'])
         for record in missing_records:
-            writer.writerow([record.get('ID'), record.get('Name'),
-                            record.get('Date'), record.get('Amount')])
-
+            writer.writerow([record.get('ID'), record.get(
+                'Name'), record.get('Date'), record.get('Amount')])
         writer.writerow([])
 
     def generate_discrepancies_section(self, writer, discrepancies):
         """
-        Generate a CSV section for discrepancies between source and target records.
-
-        :param writer: CSV writer object
-        :param discrepancies: List of discrepancies between source and target records
+        Generate  a CSV section for discrepancy records
         """
         writer.writerow(['Discrepancies'])
-        writer.writerow(['ID', 'Field', 'Source Value',
-                        'Target Value'])
+        writer.writerow(['ID', 'Field', 'Source Value', 'Target Value'])
         for discrepancy in discrepancies:
             discrepancy_id = discrepancy['id']
             for detail in discrepancy['discrepancy_details']:

@@ -5,7 +5,7 @@ from rest_framework.urlpatterns import format_suffix_patterns
 
 urlpatterns = [
     path('upload/', FileUploadView.as_view(), name='file-upload'),
-    path('reconcile/<int:file_id>/',
+    path('reconcile/<int:id>/',
          FileReconciliationView.as_view(), name='reconcile-files'),
 ]
 

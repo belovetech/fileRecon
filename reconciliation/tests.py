@@ -48,9 +48,9 @@ class FileUploadViewTests(APITestCase):
         response = self.client.get(reconciliation_url, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('missing_in_target', response.data)
-        self.assertIn('missing_in_source', response.data)
-        self.assertIn('discrepancies', response.data)
+        self.assertIn('missing_in_target', response.data['report'])
+        self.assertIn('missing_in_source', response.data['report'])
+        self.assertIn('discrepancies', response.data['report'])
 
     def test_get_reconciliation_file_not_found(self):
         response = self.client.get(

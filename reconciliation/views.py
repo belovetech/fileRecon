@@ -89,7 +89,7 @@ class FileReconciliationView(generics.RetrieveAPIView):
             elif response_format == 'html':
                 return Response(response_data, template_name='reconciliation_report.html')
             else:
-                return Response(response_data, status=status.HTTP_200_OK)
+                return Response({"message": "Reconciliation report generated successfully", "report": response_data}, status=status.HTTP_200_OK)
         except Http404:
             return Response({"error": "File not found"}, status=status.HTTP_404_NOT_FOUND)
         except ValueError as e:
